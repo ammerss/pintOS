@@ -99,17 +99,21 @@ bool save_evicted_frame(struct frame *f){
 	
 }
 
-void vm_remove_frame(void *upage) {
+void vm_remove_frame(void *frame) {
 	struct frame *f;
 	struct list_elem *e;
 
 	e = list_head(&frame_list);
 	while ((e = list_next(e)) != list_tail(&frame_list)) {
 		f = list_entry(e,struct frame, elem);
-		if (f->upage == upage) {
+		if (f == frame) {
 			list_remove(e);
 			free(f);
 			break;
 		}	
 	}
+}
+void vm_free_frame(void *frame){
+	vm_remove_frame(frame);
+	palloc_free_page(frame);
 }
