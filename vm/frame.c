@@ -20,14 +20,13 @@ void vm_frame_init() {
 void* vm_frame_allocate(enum palloc_flags flags, void *upage) {//프레임 추가
 	void *frame = palloc_get_page(PAL_USER | flags); //page userpool에서 page 가져옴
 
-	if (free_page== NULL) { //page allocate를 받을수 없는경우 
+	if (frame == NULL) { //page allocate를 받을수 없는경우 
 		vm_evict_frame();
 	}
-	if(free_page!=NULL){ //successfully allocated page
+	if(frame !=NULL){ //successfully allocated page
 		vm_add_frame(upage,frame);
 	}
 }
-
 
 void vm_add_frame(void *upage, void *frame) { //프레임테이블에 엔트리 추가
 	struct frame *f = (struct frame*) malloc(sizeof(struct frame));
@@ -41,7 +40,7 @@ void* vm_evict_frame() { //페이지자리 하나 만들기
 
 	struct frame *ef;//스왑할 페이지
 	
-	ef = frametoevict(); 
+	ef = evict_by_clock(); 
 	if (ef == NULL) //스왑할 페이지를 못찾음
 		PANIC("No frame to evict");
 	sef = save_evicted_frame(ef); //스왑할 페이지 저장
@@ -56,30 +55,48 @@ void* vm_evict_frame() { //페이지자리 하나 만들기
 	return &ef;
 }
 
-struct frame* frametoevict() {//clock algorithm ???????????????
+struct frame* evict_by_clock() {//clock algorithm
 	struct frame *f;
 	struct thread *t;
 	struct list_elem *e;
+	
+	struct frame *f_class0 = NULL;
 
 	int cnt = 0;
-	for (e = list_begin(&frame_list); e != list_end(&frame_list) && cnt != 1; e = list_next(e)) {
+	bool found = false;
+	
+	while(!found){
+		for (e = list_begin(&frame_list); e != list_end(&frame_list) && cnt < 2; e = list_next(e)) {
 
-		t = thread_get_by_id(e->t);
+			f = list_entry(e, struct vm_frame, elem);
+			t = e->t;
 
-		//clock algorithm
-		if( pagedir_is_accessed(t->pagedir,e->uaddr )){
-			return e;
+			//clock algorithm
+			if( !pagedir_is_accessed(t->pagedir,f->uaddr )){
+				f_class0 = f;
+				list_remove(e);
+				list_push_back(&frame_list, e);
+				break;
+			}
+			else {
+				pagedir_set_accessed(t->pagedir, e->uaddr, false);
+			}
 		}
-		else {
-			pagedir_set_accessed(t->pagedir, e->uaddr, false);
-		}		
-
-		//2바퀴 돌도록 
-		if (is_tail(list_next(e)) && cnt == 0) {
-			e = list_begin(&frame_list);
-			cnt++;
-		}
+		if(f_class0 != NULL) found = true;
+		else if(cnt++ == 2) found = true;
 	}
+	
+	return f_class0;
+}
+
+struct frame* evict_by_lru(){
+}
+
+struct frame* evict_by_second_chance(){
+}
+
+bool save_evicted_frame(struct frame *f){
+	
 }
 
 void vm_remove_frame(void *upage) {
