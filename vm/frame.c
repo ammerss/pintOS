@@ -28,6 +28,7 @@ void* vm_frame_allocate(enum palloc_flags flags, void *upage) {//프레임 추�
 	}
 }
 
+
 void vm_add_frame(void *upage, void *frame) { //프레임테이블에 엔트리 추가
 	struct frame *f = (struct frame*) malloc(sizeof(struct frame));
 	f->t = thread_current();

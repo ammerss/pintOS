@@ -244,6 +244,9 @@ bitmap_count (const struct bitmap *b, size_t start, size_t cnt, bool value)
       value_cnt++;
   return value_cnt;
 }
+/*
+between START and START + CNT value인 비트 개수 반환
+*/
 
 /* Returns true if any bits in B between START and START + CNT,
    exclusive, are set to VALUE, and false otherwise. */
@@ -261,6 +264,10 @@ bitmap_contains (const struct bitmap *b, size_t start, size_t cnt, bool value)
       return true;
   return false;
 }
+/*
+하나라도 할당된(true)면 true 하나도 할당안되어있으면 false 반환
+*/
+
 
 /* Returns true if any bits in B between START and START + CNT,
    exclusive, are set to true, and false otherwise.*/
@@ -309,6 +316,76 @@ bitmap_scan (const struct bitmap *b, size_t start, size_t cnt, bool value)
   return BITMAP_ERROR;
 }
 
+size_t
+bitmap_scan_extend (const struct bitmap *b, size_t start, size_t end, size_t cnt, bool value) 
+{
+  ASSERT (b != NULL);
+  ASSERT (start <= b->bit_cnt);
+
+  if (cnt <= b->bit_cnt) 
+    {
+      size_t i;
+      for (i = start; i <= end - cnt; i++)
+        if (!bitmap_contains (b, i, cnt, !value))
+          return i; 
+    }
+  return BITMAP_ERROR;
+}
+
+size_t
+bitmap_scan_min (const struct bitmap *b, size_t start, size_t cnt, bool value) 
+{
+  size_t min_idx = bitmap_scan (b, start, cnt, value);
+  if(min_idx == BITMAP_ERROR){
+      return min_idx;
+  }else{
+      size_t last = b->bit_cnt - cnt;
+      size_t i;
+      size_t fragment;
+      for(i = 1; i <= last - (min_idx + cnt) ; i++){
+	if (bitmap_test (b, min_idx + cnt + i) != false){
+	  i--;
+          break;
+	}
+      }
+      fragment = i;
+
+      for (i = min_idx + cnt + fragment + 1; i <= last; i++){
+        if (!bitmap_contains (b, i, cnt, !value)){
+	  size_t j;
+	  for(j = 1; j <= last - (i + cnt) ; j++){
+	    if (bitmap_test (b, i + cnt + j) != false){
+		j--;
+          	break;
+	    }
+	  }
+	  if(fragment > j){	
+		min_idx = i;
+		fragment = j;
+	  }
+	}
+      }
+      return min_idx;
+  }
+}
+
+size_t
+bitmap_scan_buddy (const struct bitmap *b, size_t start, size_t cnt, bool value) 
+{
+  ASSERT (b != NULL);
+  ASSERT (start <= b->bit_cnt);
+
+  if (cnt <= b->bit_cnt) 
+    {
+      size_t last = b->bit_cnt - cnt;
+      size_t i;
+      for (i = start; i <= last; i++)
+        if (!bitmap_contains (b, i, cnt, !value))
+          return i; 
+    }
+  return BITMAP_ERROR;
+}
+
 /* Finds the first group of CNT consecutive bits in B at or after
    START that are all set to VALUE, flips them all to !VALUE,
    and returns the index of the first bit in the group.
@@ -320,6 +397,42 @@ size_t
 bitmap_scan_and_flip (struct bitmap *b, size_t start, size_t cnt, bool value)
 {
   size_t idx = bitmap_scan (b, start, cnt, value);
+  if (idx != BITMAP_ERROR) 
+    bitmap_set_multiple (b, idx, cnt, !value);
+  return idx;
+}
+
+
+size_t
+bitmap_scan_extend_and_flip (struct bitmap *b, size_t start, size_t end, size_t cnt, bool value)
+{
+  size_t idx = bitmap_scan_extend (b, start, end, cnt, value);
+  if (idx != BITMAP_ERROR) 
+    bitmap_set_multiple (b, idx, cnt, !value);
+  return idx;
+}
+
+size_t
+bitmap_scan_min_and_flip (struct bitmap *b, size_t start, size_t cnt, bool value)
+{
+  size_t idx = bitmap_scan_min (b, start, cnt, value);
+  if (idx != BITMAP_ERROR) 
+    bitmap_set_multiple (b, idx, cnt, !value);
+  return idx;
+}
+
+size_t
+bitmap_scan_buddy_and_flip (struct bitmap *b, size_t start, size_t cnt, bool value)
+{
+  //expand cnt to square
+  int square = 1;
+  while(cnt > square){
+    square *= 2;
+  }
+  cnt = square;
+
+  size_t idx = bitmap_scan_buddy (b, start, cnt, value);
+
   if (idx != BITMAP_ERROR) 
     bitmap_set_multiple (b, idx, cnt, !value);
   return idx;
