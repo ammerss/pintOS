@@ -361,7 +361,8 @@ bitmap_scan (const struct bitmap *b, size_t start, size_t cnt, bool value)
 	    //첫 번째 찾은 페이지 이후로
 	    if (!bitmap_contains (b, i, cnt, !value)){
 	      // 할당 가능한 페이지를 찾으면
-	      for(size_t j = 1; j <= last - (i + cnt) ; j++){
+	      size_t j;
+	      for(j = 1; j <= last - (i + cnt) ; j++){
 		if (bitmap_test (b, i + cnt + j) != false){
 		  j--;
           	  break;
