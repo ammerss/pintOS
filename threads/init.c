@@ -220,7 +220,6 @@ main (void)
 			free(dynamicmem[i]);
 		}
   	}
-	return 0;
 //  run_actions (argv);
 
   /* Finish up. */
