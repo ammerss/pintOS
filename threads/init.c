@@ -142,8 +142,6 @@ main (void)
 			palloc_get_status (0);
 		}
 
-		thread_sleep (100);
-
 		for (i=0; i<3; i++) {
 			free(dynamicmem[i]);
 			printf ("Free 중 : \n");
@@ -190,8 +188,6 @@ main (void)
 		printf ("할당 후 : \n");
 		palloc_get_status (0);
 
-		thread_sleep (100);
-
 		for (i=2; i<6; i=i*2) {
 			free(dynamicmem[i]);
 			printf ("Free 중 : \n");
@@ -219,8 +215,6 @@ main (void)
 
 		dynamicmem[2] = (char *) malloc (100000);
 		memset (dynamicmem[2], 0x00, 100000);
-
-		thread_sleep (100);
 
 		for (i=0; i<3; i++) {
 			free(dynamicmem[i]);
