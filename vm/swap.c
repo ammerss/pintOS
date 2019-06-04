@@ -39,7 +39,7 @@ vm_swap_free( size_t swap_idx ){
 		
 		PANIC("ERROR: invalid free request to unassigned swap block");
 	}
-	bitmap_set(swap_map, swap_idx, true)
+	bitmap_set(swap_map, swap_idx, true);
 }
 
 size_t
@@ -49,7 +49,7 @@ vm_swap_out(const void *uva){
 	size_t swap_idx = bitmap_scan_and_flip(swap_map, 0, 1, true);
 
 	if(swap_idx == BITMAP_ERROR)
-		return SWAP_ERROR;
+		return BITMAP_ERROR;
 
 	/*write the page of data to the swap slot*/
 	size_t counter = 0;
@@ -65,13 +65,13 @@ vm_swap_out(const void *uva){
 void
 vm_swap_in(size_t swap_idx, void *uva){
 	
-	size_t count = 0;
+	size_t counter = 0;
 	while( counter < SECTORS_PER_PAGE ){
 
-		blokc_read( swap_device, swap_idx * SECTORS_PER_PAGE + counter, uva + counter*BLOCK_SECTOR_SIZE);
+		block_read( swap_device, swap_idx * SECTORS_PER_PAGE + counter, uva + counter*BLOCK_SECTOR_SIZE);
 		counter++;
 	}
-	bitmap_filp(swap_map, swap_idx);
+	bitmap_flip(swap_map, swap_idx);
 }
 
 static size_t
