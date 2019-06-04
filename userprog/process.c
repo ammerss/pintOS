@@ -17,7 +17,7 @@
 #include "threads/palloc.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
-
+#include "vm/frame.h"
 /* Parameters for user program execution
    len: the length of a program command line
    cmdline: a string pointer to program command line */
@@ -476,7 +476,7 @@ load_segment(struct file *file, off_t ofs, uint8_t *upage,
 
 		/* Get a page of memory. */
 		//프레임타이블을 이용ㅇ
-		unit8_t *kpage = vm_frame_allocate(PAL_USER);
+		uint8_t *kpage = vm_frame_allocate(PAL_USER,upage);
 		if (kpage == NULL)
 			return false;
 
@@ -516,7 +516,7 @@ setup_stack(struct uprg_params *params, void **esp)
 	int i, t, argc;
 	uint32_t addr;
 
-	kpage = vm_frame_allocate(PAL_USER | PAL_ZERO);
+	kpage = vm_frame_allocate(PAL_USER | PAL_ZERO,PHYS_BASE-PGSIZE);
 	if (kpage != NULL)
 	{
 		success = install_page(((uint8_t *)PHYS_BASE) - PGSIZE, kpage, true);
