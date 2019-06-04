@@ -25,8 +25,6 @@
 
 /* A memory pool. */
 
-#define MAX_ORDER 32;
-
 struct pool
   {
     struct lock lock;                   /* Mutual exclusion. */
