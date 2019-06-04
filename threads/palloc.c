@@ -45,7 +45,7 @@ static bool page_from_pool (const struct pool *, void *page);
    pages are put into the user pool. */
 
 //페이지 할당 방식 옵션 설정
-enum palloc_allocator option = 0;
+enum palloc_allocator option = 1;
 
 void
 palloc_init (size_t user_page_limit)
@@ -151,6 +151,17 @@ void
 palloc_free_page (void *page) 
 {
   palloc_free_multiple (page, 1);
+}
+
+/* Obtains a status of the page pool */
+void
+palloc_get_status (enum palloc_flags flags)
+{
+  struct pool *pool = flags & PAL_USER ? &user_pool : &kernel_pool;
+
+  lock_acquire (&pool->lock);
+  bitmap_dump2 (pool->used_map);
+  lock_release (&pool->lock);
 }
 
 /* Initializes pool P as starting at START and ending at END,
