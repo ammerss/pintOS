@@ -1,19 +1,22 @@
 
-#include <list.h>
-#include <thread.h>
-static struct list frame_list //list of frames
+#include "lib/kernel/list.h"
+#include "threads/thread.h"
+#include <debug.h>
+#include <stdio.h>
+#include "userprog/pagedir.h"
+#include "threads/paolloc.h"
+#include "threads/malloc.h"
+
+#include "vm/frame.h"
+
+
 static struct list_elem *clock_ptr;
 
 
-struct frame { //frame table entries
-	void *upage; //pointer to page, user virtual page
-	void *uaddr; //pointer to user virtual address
-	struct thread *t; //thread the page belongs to
-	struct list_elem elem; //element in frame_list
-};
+
 
 void vm_frame_init() {
-	list_init(&frame_list); 
+	list_init(&frame_list);
 	//clock_ptr = NULL;
 }
 
@@ -23,8 +26,8 @@ void* vm_frame_allocate(enum palloc_flags flags, void *upage) {//프레임 추�
 	if (frame == NULL) { //page allocate를 받을수 없는경우 
 		vm_evict_frame();
 	}
-	if(frame !=NULL){ //successfully allocated page
-		vm_add_frame(upage,frame);
+	if (frame != NULL) { //successfully allocated page
+		vm_add_frame(upage, frame);
 	}
 }
 
@@ -39,8 +42,8 @@ void vm_add_frame(void *upage, void *frame) { //프레임테이블에 엔트리 
 void* vm_evict_frame() { //페이지자리 하나 만들기
 
 	struct frame *ef;//스왑할 페이지
-	
-	ef = evict_by_clock(); 
+
+	ef = evict_by_clock();
 	if (ef == NULL) //스왑할 페이지를 못찾음
 		PANIC("No frame to evict");
 	sef = save_evicted_frame(ef); //스왑할 페이지 저장
@@ -59,20 +62,20 @@ struct frame* evict_by_clock() {//clock algorithm
 	struct frame *f;
 	struct thread *t;
 	struct list_elem *e;
-	
+
 	struct frame *f_class0 = NULL;
 
 	int cnt = 0;
 	bool found = false;
-	
-	while(!found){
+
+	while (!found) {
 		for (e = list_begin(&frame_list); e != list_end(&frame_list) && cnt < 2; e = list_next(e)) {
 
 			f = list_entry(e, struct vm_frame, elem);
 			t = e->t;
 
 			//clock algorithm
-			if( !pagedir_is_accessed(t->pagedir,f->uaddr )){
+			if (!pagedir_is_accessed(t->pagedir, f->uaddr)) {
 				f_class0 = f;
 				list_remove(e);
 				list_push_back(&frame_list, e);
@@ -82,21 +85,21 @@ struct frame* evict_by_clock() {//clock algorithm
 				pagedir_set_accessed(t->pagedir, e->uaddr, false);
 			}
 		}
-		if(f_class0 != NULL) found = true;
-		else if(cnt++ == 2) found = true;
+		if (f_class0 != NULL) found = true;
+		else if (cnt++ == 2) found = true;
 	}
-	
+
 	return f_class0;
 }
 
-struct frame* evict_by_lru(){
+struct frame* evict_by_lru() {
 }
 
-struct frame* evict_by_second_chance(){
+struct frame* evict_by_second_chance() {
 }
 
-bool save_evicted_frame(struct frame *f){
-	
+bool save_evicted_frame(struct frame *f) {
+
 }
 
 void vm_remove_frame(void *frame) {
@@ -105,15 +108,15 @@ void vm_remove_frame(void *frame) {
 
 	e = list_head(&frame_list);
 	while ((e = list_next(e)) != list_tail(&frame_list)) {
-		f = list_entry(e,struct frame, elem);
+		f = list_entry(e, struct frame, elem);
 		if (f == frame) {
 			list_remove(e);
 			free(f);
 			break;
-		}	
+		}
 	}
 }
-void vm_free_frame(void *frame){
+void vm_free_frame(void *frame) {
 	vm_remove_frame(frame);
 	palloc_free_page(frame);
 }
