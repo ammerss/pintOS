@@ -4,7 +4,7 @@
 #include <debug.h>
 #include <stdio.h>
 #include "userprog/pagedir.h"
-#include "threads/paolloc.h"
+#include "threads/palloc.h"
 #include "threads/malloc.h"
 
 #include "vm/frame.h"
@@ -46,7 +46,7 @@ void* vm_evict_frame() { //페이지자리 하나 만들기
 	ef = evict_by_clock();
 	if (ef == NULL) //스왑할 페이지를 못찾음
 		PANIC("No frame to evict");
-	sef = save_evicted_frame(ef); //스왑할 페이지 저장
+	struct frame *sef = save_evicted_frame(ef); //스왑할 페이지 저장
 	if (!sef) //스왑할 페이지 저장실패
 		PANIC("can't save evicted frame");
 
@@ -71,8 +71,8 @@ struct frame* evict_by_clock() {//clock algorithm
 	while (!found) {
 		for (e = list_begin(&frame_list); e != list_end(&frame_list) && cnt < 2; e = list_next(e)) {
 
-			f = list_entry(e, struct vm_frame, elem);
-			t = e->t;
+			f = list_entry(e, struct frame, elem);
+			t = f->t;
 
 			//clock algorithm
 			if (!pagedir_is_accessed(t->pagedir, f->uaddr)) {
@@ -82,7 +82,7 @@ struct frame* evict_by_clock() {//clock algorithm
 				break;
 			}
 			else {
-				pagedir_set_accessed(t->pagedir, e->uaddr, false);
+				pagedir_set_accessed(t->pagedir, f->uaddr, false);
 			}
 		}
 		if (f_class0 != NULL) found = true;
@@ -98,8 +98,8 @@ struct frame* evict_by_lru() {
 struct frame* evict_by_second_chance() {
 }
 
-bool save_evicted_frame(struct frame *f) {
-
+struct frame* save_evicted_frame(struct frame *f) {
+	return f;
 }
 
 void vm_remove_frame(void *frame) {
