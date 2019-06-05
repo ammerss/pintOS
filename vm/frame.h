@@ -1,4 +1,3 @@
-
 #include "threads/thread.h"
 
 struct frame { //frame table entries
