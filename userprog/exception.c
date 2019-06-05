@@ -148,7 +148,7 @@ page_fault (struct intr_frame *f)
   write = (f->error_code & PF_W) != 0;
   user = (f->error_code & PF_U) != 0;
 
-  void * fault_page = (void *) (PTE_ADDR & (uint32_t) fault_addr);
+  void * fault_page = (void *) ((void *) fault_addr);
   struct thread *t = thread_current();
 
   if(!user){
@@ -166,8 +166,8 @@ page_fault (struct intr_frame *f)
 
   	void * kpage=vm_evict_frame() ;//사용중이지 않은 페이지
 		if(kpage!=NULL){
-			void * pd=t->(void *)pagedir;
-			pagedir_set_page(pd,fault_page,kpage,writable);
+			void * pd=t->pagedir;
+			pagedir_set_page(pd,fault_page,kpage,true);
 			pagedir_set_dirty(pd,fault_page,true);
 			pagedir_set_accessed(pd,fault_page,true);
 		}
