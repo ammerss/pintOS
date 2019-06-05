@@ -192,11 +192,11 @@ void vm_remove_frame(void *frame) {
 		}
 	}
 }
-void vm_free_frame(void *frame) {
+void vm_free_frame(void *frame) { //프레임 할당해제 해줄 때 프레임이랑 페이지 둘다 할당해야되는데 하나로 묶고 싶어서 만든 함수!
 	vm_remove_frame(frame);
 	palloc_free_page(frame);
 }
-void vm_set_frame(void *fr, void *pte, void *upage){
+void vm_set_frame(void *fr, void *pte, void *upage){ //프레임을 원하는 주소에 설정해주는 함수인데 , pagedir 에서 쓸려고만듬
 	struct frame *f, *find;
 	struct list_elem *e;
 	f=fr;
