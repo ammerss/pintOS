@@ -41,7 +41,8 @@ pagedir_destroy (uint32_t *pd)
         
         for (pte = pt; pte < pt + PGSIZE / sizeof *pte; pte++)
           if (*pte & PTE_P) 
-            palloc_free_page (pte_get_page (*pte));
+            //palloc_free_page (pte_get_page (*pte));
+	    vm_free_frame(pt); //// 
         palloc_free_page (pt);
       }
   palloc_free_page (pd);
@@ -112,6 +113,8 @@ pagedir_set_page (uint32_t *pd, void *upage, void *kpage, bool writable)
     {
       ASSERT ((*pte & PTE_P) == 0);
       *pte = pte_create_user (kpage, writable);
+
+      vm_set_frame(kpage,pte,upage);
       return true;
     }
   else
