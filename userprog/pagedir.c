@@ -252,9 +252,10 @@ void*
 pagedir_lru_list_get_head(bool remove_bit){
    
    struct list_elem* e = list_head(&lru_list);
+   struct lru *l = list_entry(e, struct lru, elem);
    if(remove_bit == true) list_remove(e);
    
-   return list_entry(e, struct lru, elem);
+   return l->page;
 }
 
 bool
