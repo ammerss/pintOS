@@ -42,6 +42,9 @@ void* vm_evict_frame() { //페이지자리 하나 만들기
 	struct frame *ef;//스왑할 페이지
 
 	ef = evict_by_clock();
+	//ef = evict_by_lur();
+	//ef = evict_by_secont_chance();
+	
 	if (ef == NULL) //스왑할 페이지를 못찾음
 		PANIC("No frame to evict");
 	if(!save_evicted_frame(ef))
