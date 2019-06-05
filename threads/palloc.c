@@ -25,10 +25,12 @@
 
 /* A memory pool. */
 
+#define MAX_ORDER 32;
+
 struct pool
   {
     struct lock lock;                   /* Mutual exclusion. */
-    struct bitmap *used_map;            /* Bitmap of free pages.*/
+    struct bitmap *used_map;            /* Bitmap of free pages. 비트개수, 비트들의배열가짐 */
     uint8_t *base;                      /* Base of pool. */
   };
 
@@ -52,6 +54,9 @@ palloc_init (size_t user_page_limit)
 {
   /* Free memory starts at 1 MB and runs to the end of RAM. */
   uint8_t *free_start = ptov (1024 * 1024);
+//free_start는 pintos의 4MB의 메모리 중 1MB 부분을 나타낸다.
+//uint8_t 8비트(1바이트) 크기의 부호 없는 정수형 변수 선언
+//ptov커널의 물리적 주소를 맵핑된 커널의 가상주소로 리턴해주는 함수이다.
   uint8_t *free_end = ptov (init_ram_pages * PGSIZE);
   size_t free_pages = (free_end - free_start) / PGSIZE;
   size_t user_pages = free_pages / 2;
@@ -72,34 +77,73 @@ palloc_init (size_t user_page_limit)
    then the pages are filled with zeros.  If too few pages are
    available, returns a null pointer, unless PAL_ASSERT is set in
    FLAGS, in which case the kernel panics. */
+
+/*
+First Fit으로 구현된 연속된 페이지 할당 정책에
+Next Fit, Best Fit, 그리고 Buddy System 을 추가한다.
+이는 User Pool과 Kernel Pool에 동시에 적용될 수 있어야 한다. 
+*/
+
 void *
-palloc_get_multiple (enum palloc_flags flags, size_t page_cnt)
+palloc_get_multiple (enum palloc_flags flags, size_t page_cnt, int option)
 {
   struct pool *pool = flags & PAL_USER ? &user_pool : &kernel_pool;
+//PAL_USER PAL_... flag argument 
   void *pages;
+//범용포인터(Generic Pointer)
+//범용이므로 사용전에 항상 적절한 캐스팅이 필요
   size_t page_idx;
 
   if (page_cnt == 0)
     return NULL;
 
   lock_acquire (&pool->lock);
-  page_idx = bitmap_scan_and_flip (pool->used_map, 0, page_cnt, false);
+//TODO select mode
+  page_idx = first_fit(pool, page_cnt);
+
+switch (option) {
+    case 1: //first fit
+	page_idx = bitmap_scan_and_flip (pool->used_map, 0, page_cnt, false);; 
+	break;
+    case 2://next fit
+	page_idx = bitmap_scan_and_flip (pool->used_map, pre_page_idx, page_cnt, false);
+	if (page_idx == BITMAP_ERROR)
+		page_idx = bitmap_scan_extend_and_flip (pool->used_map, 0, pre_page_idx, page_cnt, false);
+	break;
+    case 3://best fit
+	page_idx = bitmap_scan_min_and_flip (pool->used_map, 0, page_cnt, false);
+	break;
+    case 4 ://buddy system
+	page_idx = bitmap_scan_buddy_and_flip(pool->used_map, 0, page_cnt, false);
+	break;
+
+    default:
+	break;
+}
+  pre_page_idx = page_idx;
+//page_idx = bitmap_scan_and_flip (pool->used_map, 0, page_cnt, false);
+//원하는 인덱스를 찾지 못할 경우 미리 정의된 BITMAP_ERROR 를 리턴
+//각 풀의 용도는 풀의 페이지당 1비트인 비트맵으로 추적된다. n 페이지를 할당하라는 요청은 false로 설정된 n개의 연속 비트에 대한 비트맵을 스캔하여 해당 페이지가 자유롭다는 것을 표시한 다음 해당 비트를 true로 설정하여 사용한 것으로 표시한다.
   lock_release (&pool->lock);
 
   if (page_idx != BITMAP_ERROR)
     pages = pool->base + PGSIZE * page_idx;
   else
     pages = NULL;
+//Returns a null pointer if the pages cannot be allocated.
 
   if (pages != NULL) 
     {
       if (flags & PAL_ZERO)
         memset (pages, 0, PGSIZE * page_cnt);
+//어떤 메모리의 시작점부터 연속된 범위를 어떤 값으로(바이트 단위) 모두 지정하고 싶을 때 사용하는 함수
+//할당된 페이지의 모든 바이트를 반환하기 전에 0으로 설정하십시오. 설정하지 않으면 새로 할당된 페이지의 내용은 예측할 수 없다.
     }
   else 
     {
       if (flags & PAL_ASSERT)
         PANIC ("palloc_get: out of pages");
+//PAL_ASSERT : If the pages cannot be allocated, panic the kernel. This is only appropriate during kernel initialization. User processes should never be permitted to panic the kernel.
     }
 
   return pages;
@@ -115,7 +159,7 @@ palloc_get_multiple (enum palloc_flags flags, size_t page_cnt)
 void *
 palloc_get_page (enum palloc_flags flags) 
 {
-  return palloc_get_multiple (flags, 1);
+  return palloc_get_multiple (flags, 1, 1);
 }
 
 /* Frees the PAGE_CNT pages starting at PAGES. */
