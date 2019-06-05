@@ -228,9 +228,14 @@ pagedir_set_accessed (uint32_t *pd, const void *vpage, bool accessed)
 
 void
 pagedir_lru_list_add(const void *vpage){
-   
+
+     struct lru * l;
+
    for(struct list_elem* e=list_head(&lru_list); e != list_tail(&lru_list); e=list_next(e)){
-      if(e == vpage){
+	
+	l = list_entry(e, struct lru, elem);
+
+        if(l->page == vpage){
          list_remove(e);
          list_push_back(&lru_list, e);
          break;
@@ -238,7 +243,8 @@ pagedir_lru_list_add(const void *vpage){
       }
    }
    
-   list_push_back(&lru_list, vpage);
+   l->page = vpage;
+   list_push_back(&lru_list, l);
    return;
 }
 
