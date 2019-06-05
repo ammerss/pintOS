@@ -9,6 +9,11 @@
 static uint32_t *active_pd (void);
 static void invalidate_pagedir (uint32_t *);
 
+struct lru{
+   struct list_elem elem;
+   void* page;
+};
+
 static struct list lru_list;
 
 /* Creates a new page directory that has mappings for kernel
@@ -237,7 +242,10 @@ pagedir_lru_list_add(const void *vpage){
 void*
 pagedir_lru_list_get_head(){
    
-   return list_head(&lru_list);
+   list_elem* e = list_head(&lru_list);
+   list_remove(e);
+   
+   return list_entry(e, struct lru, elem);
 }
 
 /* Loads page directory PD into the CPU's page directory base
