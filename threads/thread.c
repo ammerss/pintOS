@@ -185,7 +185,7 @@ thread_create (const char *name, int priority,
 
 #ifdef USERPROG
   /* Initialize file descriptor table. */
-  t->fd_table = palloc_get_multiple (PAL_ZERO, 2 , 1);
+  t->fd_table = palloc_get_multiple (PAL_ZERO, 2 );
   if (t->fd_table == NULL)
     {
       palloc_free_page (t);
