@@ -59,14 +59,23 @@ struct frame* evict_by_clock() {//clock algorithm
 	struct frame *f;
 	struct thread *t;
 	struct list_elem *e;
-
+	void* last_use = pagedir_lru_list_get_head(false);
+	if(last_use != NULL){
+		for(e=list_begin(&frame_list); e!=list_end(&frame_list); e=list_next(e)){
+			f = list_entry(e, struct frame, elem);
+			if(f->uaddr == last_use){
+				e = f;
+			}
+		}
+	}
 	struct frame *f_class0 = NULL;
 
 	int cnt = 0;
 	bool found = false;
 
+	
 	while (!found) {
-		for (e = list_begin(&frame_list); e != list_end(&frame_list) && cnt < 2; e = list_next(e)) {
+		for (; e != list_end(&frame_list) && cnt < 2; e = list_next(e)) {
 
 			f = list_entry(e, struct frame, elem);
 			t = f->t;
@@ -86,14 +95,15 @@ struct frame* evict_by_clock() {//clock algorithm
 		else if (cnt++ == 2) found = true;
 	}
 
+	pagedir_lru_list_remove(f_class0->uaddr);
+
 	return f_class0;
 }
 
 struct frame* evict_by_lru() {
 	struct frame *f;
-	struct thread *t;
 	struct list_elem *e;
-	void* evict_page = pagedir_lru_list_get_head();
+	void* evict_page = pagedir_lru_list_get_head(true);
 	
 	if(evict_page == NULL){
 		PANIC("No page in LRU list");
