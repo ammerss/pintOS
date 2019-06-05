@@ -28,7 +28,7 @@ void* vm_frame_allocate(enum palloc_flags flags, void *upage) {//프레임 추�
 	}
 	if (frame != NULL) { //successfully allocated page
 		vm_add_frame(upage, frame);
-	}
+	} 
 }
 
 void vm_add_frame(void *upage, void *frame) { //프레임테이블에 엔트리 추가
@@ -119,4 +119,20 @@ void vm_remove_frame(void *frame) {
 void vm_free_frame(void *frame) {
 	vm_remove_frame(frame);
 	palloc_free_page(frame);
+}
+void vm_set_frame(void *frame, void *pte, void *upage){
+	struct frame *f, *find;
+	struct list_elem *e;
+	e=list_head(&frame_list);
+	while((e=list_next(e)) != list_tail (&frame_list)){
+		find=list_entry(e, struct frame, elem);
+		if(find->frame ==f){
+			break;
+		}
+		find=NULL;
+	}
+	if(find != NULL){
+		find->uaddr = pte;
+		find->upage = upage;
+	}
 }
