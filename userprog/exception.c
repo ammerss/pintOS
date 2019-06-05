@@ -170,12 +170,9 @@ page_fault (struct intr_frame *f)
 			pagedir_set_page(pd,fault_page,kpage,true);
 			pagedir_set_dirty(pd,fault_page,true);
 			pagedir_set_accessed(pd,fault_page,true);
-		}
-
-			
-
-	
-	
+		}	
   }
+
+  
 }
 

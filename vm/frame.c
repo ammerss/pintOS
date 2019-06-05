@@ -8,7 +8,6 @@
 #include "threads/malloc.h"
 #include "threads/vaddr.h"
 #include "vm/swap.h"
-#include "vm/page.h"
 #include "vm/frame.h"
 
 
