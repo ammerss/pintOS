@@ -12,9 +12,6 @@
 
 static struct list_elem *clock_ptr;
 
-
-
-
 void vm_frame_init() {
 	list_init(&frame_list);
 	//clock_ptr = NULL;
@@ -93,6 +90,24 @@ struct frame* evict_by_clock() {//clock algorithm
 }
 
 struct frame* evict_by_lru() {
+	struct frame *f;
+	struct thread *t;
+	struct list_elem *e;
+	void* evict_page = pagedir_lru_list_get_head();
+	
+	if(evict_page == NULL){
+		PANIC("No page in LRU list");
+	}
+	
+	for(e = list_begin(&frame_list); e!=list_end(&frame_list); e = list_next(e)){
+		f = list_entry(e, struct frame, elem);
+		
+		if(f->upage == evict_page){
+			return f;
+		}
+	}
+	
+	return NULL;
 }
 
 struct frame* evict_by_second_chance() {
