@@ -39,10 +39,9 @@
 #endif
 
 int test_fragmentation(int seed);
-int test_time();
+int test_alloctaion();
 void test1();
 
-void int_test_time();
 /* Page directory with kernel mappings only. */
 uint32_t *init_page_dir;
 
@@ -118,7 +117,6 @@ main (void)
 #ifdef USERPROG
   exception_init ();
   syscall_init ();
-  test1();
 #endif
 
   /* Start thread scheduler and enable interrupts. */
@@ -137,6 +135,7 @@ main (void)
   
   /* Run actions specified on kernel command line. */
   run_actions (argv);
+  test1();
 
   /* Finish up. */
   shutdown ();
@@ -146,6 +145,7 @@ main (void)
 
 int
 test_fragmentation(int seed){
+  /*
   int start_time;
   int elapsed_time;
   void** segments = malloc(init_ram_pages*sizeof(void*));
@@ -155,39 +155,38 @@ test_fragmentation(int seed){
   printf("fragmentation bench started, (seed: %d), tot.page = %d\n", seed, init_ram_pages);
 
   start_time = timer_ticks();
-  for( segcnt =0; 1 ;segcnt++)//add i random
-  {
+  for( segcnt =0; segcnt < 5 ;segcnt++){ //랜덤으로 최대 5개 할당
     segSize[segcnt] = random_ulong()%16+1;
-    segments[segcnt] = palloc_get_multiple(PAL_USER,segSize[segcnt]);//get 1~16 random pagecd
-    if(segments[segcnt] == NULL ) break;
+    segments[segcnt] = palloc_get_multiple(PAL_USER,segSize[segcnt]);
+    if(segments[segcnt] == NULL ) break; //할당이 안 될 경우 5개 이하여도 탈출
   }
   segcnt++;
-  for(i=0 ; i<segcnt ; i++)
-  {
+  for(i=0 ; i<segcnt ; i++){ //할당 한 만큼 할당 해제
     if(i%10 == 0)
       continue;
     palloc_free_multiple(segments[i],segSize[i]);
   }
   addedCnt=0;
-  for(idx=0 ;  ; idx++)
-  {
+
+  for(idx=0 ;  ; idx++){
     if(idx<segcnt && idx%10 ==0 )
       continue;
     segSize[idx] = random_ulong()%16+1;
-    segments[idx] = palloc_get_multiple(PAL_USER,segSize[idx]);//get 1~16 random pagecd
+    segments[idx] = palloc_get_multiple(PAL_USER,segSize[idx]);
     if(segments[idx] == NULL ) break;
     addedCnt++;
     if(i%10 == 0)
       continue;
   }
   printf("p3\n");
-  elapsed_time = timer_ticks() - start_time;//save timer status.
+  elapsed_time = timer_ticks() - start_time;
 
   for(i=0;;i++)
   {
     if(segments[i]==NULL) break;
     palloc_free_multiple(segments[i],segSize[i]);
   }
+
   printf("fragmentation bench finished, (with seed: %d)\n", seed);
   printf("segment allocatied: initial - %d, final - %d\n", segcnt, addedCnt+segcnt/10);
   printf("fragmentation score: %d/%d(%d%%)\n\n",addedCnt,segcnt-segcnt/10,(addedCnt*100/(segcnt-segcnt/10)));
@@ -196,55 +195,49 @@ test_fragmentation(int seed){
   free(segSize);
 
   return addedCnt*100 / (segcnt - segcnt/10) ;
+  */
+  return 0;
 }
 
 int
-test_time(){
+test_allocation(){
 
   int start_time = timer_ticks();
   int elapsed_time;
 
-  void* segments[100];
-  int segSize[100];
-
-  int i;
-
-  random_init (start_time);
+  size_t i;
+  char* dynamicmem[10];
 
   printf ("할당 전 : \n");
   palloc_get_status (0);
 
-  for( i =0;i<100;i++){//add 100 random
-    segSize[i] = random_ulong()%16+1;
-    segments[i] = palloc_get_multiple(PAL_USER,segSize[i]);//get 1~16 random pagecd
+  for (i=0; i<3; i++) {
+    dynamicmem[i] = (char *) malloc (145000);
+    memset (dynamicmem[i], 0x00, 145000);
+    printf ("할당 중 : \n");
+    palloc_get_status (0);
   }
 
-  printf ("100개 할당 : \n");
-  palloc_get_status (0);
-
-  for(i = 0;i<100;i+=2){//remove
-    palloc_free_multiple(segments[i],segSize[i]);
+  for (i=0; i<3; i++) {
+    free(dynamicmem[i]);
+    printf ("Free 중 : \n");
+    palloc_get_status (0);
   }
 
-  printf ("50개 삭제 : \n");
-  palloc_get_status (0);
-
-  for(i = 0;i<100;i+=2){//add 50, random
-    segSize[i] = random_ulong()%16+1;
-    segments[i] = palloc_get_multiple(PAL_USER,segSize[i]);//get 1~16 random page
+  for (i=4; i<8; i++) {
+    dynamicmem[i] = (char *) malloc (145000);
+    memset (dynamicmem[i], 0x00, 145000);
+    printf ("할당 중 : \n");
+    palloc_get_status (0);
   }
 
-  printf ("50개 추가: \n");
-  palloc_get_status (0);
-
-  for(i = 0;i<100;i++){
-    palloc_free_multiple(segments[i],segSize[i]);
-  }
+  for (i=4; i<8; i++) {
+    free(dynamicmem[i]);
+    printf ("Free 중 : \n");
+    palloc_get_status (0);
+  } 
 
   elapsed_time = timer_ticks() - start_time;
-
-  printf ("100개 삭제: \n");
-  palloc_get_status (0);
 
   return elapsed_time;
 }
@@ -256,14 +249,12 @@ test1 (void){
 
   printf ("test running time with seed 1~100\n");
 
-  for(i =0;i<100;i++){
-      testResult += test_time();
-  }
+  testResult += test_allocation();
   printf ("ended time test, elapsed time : %d.%04d seconds\n\n", testResult/1000, testResult%1000);
 
   printf("\n");
   printf ("test fragmentation with seed 1~100\n");
-  for(i =0;i<100;i++){
+  for(i =0;i<10;i++){
     testResult += test_fragmentation(i);
   }
   printf ("ended fragmentation test, avg.score : %d.%02d\n\n", testResult/100, testResult%100);
