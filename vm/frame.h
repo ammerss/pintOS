@@ -34,3 +34,4 @@ struct frame *save_evicted_frame(struct frame *f);
 
 void vm_remove_frame(void *frame);
 void vm_free_frame(void *frame);
+void vm_set_frame(void*, void *, void *);

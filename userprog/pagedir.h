@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include "lib/kernel/list.h"
 
 uint32_t *pagedir_create (void);
 void pagedir_destroy (uint32_t *pd);
@@ -13,6 +14,8 @@ bool pagedir_is_dirty (uint32_t *pd, const void *upage);
 void pagedir_set_dirty (uint32_t *pd, const void *upage, bool dirty);
 bool pagedir_is_accessed (uint32_t *pd, const void *upage);
 void pagedir_set_accessed (uint32_t *pd, const void *upage, bool accessed);
+void pagedir_lru_list_add(const void *upage);
+void *pagedir_lru_list_get_head();
 void pagedir_activate (uint32_t *pd);
 
 #endif /* userprog/pagedir.h */

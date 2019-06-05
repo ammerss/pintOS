@@ -9,6 +9,13 @@
 static uint32_t *active_pd (void);
 static void invalidate_pagedir (uint32_t *);
 
+struct lru{
+   struct list_elem elem;
+   void* page;
+};
+
+static struct list lru_list;
+
 /* Creates a new page directory that has mappings for kernel
    virtual addresses, but none for user virtual addresses.
    Returns the new page directory, or a null pointer if memory
@@ -41,7 +48,8 @@ pagedir_destroy (uint32_t *pd)
         
         for (pte = pt; pte < pt + PGSIZE / sizeof *pte; pte++)
           if (*pte & PTE_P) 
-            palloc_free_page (pte_get_page (*pte));
+            //palloc_free_page (pte_get_page (*pte));
+	    vm_free_frame(pt); //// 
         palloc_free_page (pt);
       }
   palloc_free_page (pd);
@@ -112,6 +120,8 @@ pagedir_set_page (uint32_t *pd, void *upage, void *kpage, bool writable)
     {
       ASSERT ((*pte & PTE_P) == 0);
       *pte = pte_create_user (kpage, writable);
+
+      vm_set_frame(kpage,pte,upage);
       return true;
     }
   else
@@ -204,14 +214,41 @@ pagedir_set_accessed (uint32_t *pd, const void *vpage, bool accessed)
   uint32_t *pte = lookup_page (pd, vpage, false);
   if (pte != NULL) 
     {
-      if (accessed)
+      if (accessed){
         *pte |= PTE_A;
+         pagedir_lru_list_add(vpage);
+      }
       else 
         {
           *pte &= ~(uint32_t) PTE_A; 
           invalidate_pagedir (pd);
         }
     }
+}
+
+void
+pagedir_lru_list_add(const void *vpage){
+   
+   for(struct list_elem* e=list_head(&lru_list); e != list_tail(&lru_list); e=list_next(e)){
+      if(e == vpage){
+         list_remove(e);
+         list_push_back(&lru_list, e);
+         break;
+         return;
+      }
+   }
+   
+   list_push_back(&lru_list, vpage);
+   return;
+}
+
+void*
+pagedir_lru_list_get_head(){
+   
+   struct list_elem* e = list_head(&lru_list);
+   list_remove(e);
+   
+   return list_entry(e, struct lru, elem);
 }
 
 /* Loads page directory PD into the CPU's page directory base
