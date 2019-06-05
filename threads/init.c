@@ -38,6 +38,10 @@
 #include "filesys/fsutil.h"
 #endif
 
+int test_fragmentation(int seed);
+int test_alloctaion();
+void test1();
+
 /* Page directory with kernel mappings only. */
 uint32_t *init_page_dir;
 
@@ -130,103 +134,133 @@ main (void)
   printf ("Boot complete.\n");
   
   /* Run actions specified on kernel command line. */
-  if(option == 1)
-   {
-      size_t i;
-      char* dynamicmem[11];
-
-      for (i=0; i<3; i++) {
-         dynamicmem[i] = (char *) malloc (145000);
-         memset (dynamicmem[i], 0x00, 145000);
-         printf ("할당 중 : \n");
-         palloc_get_status (0);
-      }
-
-      for (i=0; i<3; i++) {
-         free(dynamicmem[i]);
-         printf ("Free 중 : \n");
-         palloc_get_status (0);
-      }
-
-      for (i=6; i<9; i++) {
-         dynamicmem[i] = (char *) malloc (145000);
-         memset (dynamicmem[i], 0x00, 145000);
-         printf ("할당 중 : \n");
-         palloc_get_status (0);
-      }
-
-      for (i=6; i<9; i++) {
-         free(dynamicmem[i]);
-         printf ("Free 중 : \n");
-         palloc_get_status (0);
-      }
-   }
-
-   if(option == 2)
-   {
-      size_t i;
-      char* dynamicmem[11];
-
-      dynamicmem[0] = (char *) malloc (110000);
-      memset (dynamicmem[0], 0x00, 110000);
-
-      dynamicmem[1] = (char *) malloc (200000);
-      memset (dynamicmem[1], 0x00, 200000);
-
-      dynamicmem[2] = (char *) malloc (300000);
-      memset (dynamicmem[2], 0x00, 300000);
-
-      dynamicmem[3] = (char *) malloc (140000);
-      memset (dynamicmem[3], 0x00, 140000);
-
-      dynamicmem[4] = (char *) malloc (180000);
-      memset (dynamicmem[4], 0x00, 180000);
-
-      dynamicmem[5] = (char *) malloc (220000);
-      memset (dynamicmem[5], 0x00, 220000);
-
-      printf ("할당 후 : \n");
-      palloc_get_status (0);
-
-      for (i=2; i<6; i=i*2) {
-         free(dynamicmem[i]);
-         printf ("Free 중 : \n");
-         palloc_get_status (0);
-      }
-
-      for (i=6; i<10; i++) {
-         dynamicmem[i] = (char *) malloc (140000);
-         memset (dynamicmem[i], 0x00, 140000);
-         printf ("할당 중 : \n");
-         palloc_get_status (0);
-      }
-   }
-
-   if(option == 3)
-   {
-      size_t i;
-      char* dynamicmem[11];
-
-      dynamicmem[0] = (char *) malloc (50000);
-      memset (dynamicmem[0], 0x00, 50000);
-
-      dynamicmem[1] = (char *) malloc (300000);
-      memset (dynamicmem[1], 0x00, 300000);
-
-      dynamicmem[2] = (char *) malloc (100000);
-      memset (dynamicmem[2], 0x00, 100000);
-
-      for (i=0; i<3; i++) {
-         free(dynamicmem[i]);
-      }
-     }
-//  run_actions (argv);
+  run_actions (argv);
+  test1();
 
   /* Finish up. */
   shutdown ();
   thread_exit ();
+
 }
- 
+
+int
+test_fragmentation(int seed){
+  /*
+  int start_time;
+  int elapsed_time;
+  void** segments = malloc(init_ram_pages*sizeof(void*));
+  int *segSize = malloc(init_ram_pages*sizeof(int));
+  int segcnt, i, idx, addedCnt;
+
+  printf("fragmentation bench started, (seed: %d), tot.page = %d\n", seed, init_ram_pages);
+
+  start_time = timer_ticks();
+  for( segcnt =0; segcnt < 5 ;segcnt++){ //랜덤으로 최대 5개 할당
+    segSize[segcnt] = random_ulong()%16+1;
+    segments[segcnt] = palloc_get_multiple(PAL_USER,segSize[segcnt]);
+    if(segments[segcnt] == NULL ) break; //할당이 안 될 경우 5개 이하여도 탈출
+  }
+  segcnt++;
+  for(i=0 ; i<segcnt ; i++){ //할당 한 만큼 할당 해제
+    if(i%10 == 0)
+      continue;
+    palloc_free_multiple(segments[i],segSize[i]);
+  }
+  addedCnt=0;
+
+  for(idx=0 ;  ; idx++){
+    if(idx<segcnt && idx%10 ==0 )
+      continue;
+    segSize[idx] = random_ulong()%16+1;
+    segments[idx] = palloc_get_multiple(PAL_USER,segSize[idx]);
+    if(segments[idx] == NULL ) break;
+    addedCnt++;
+    if(i%10 == 0)
+      continue;
+  }
+  printf("p3\n");
+  elapsed_time = timer_ticks() - start_time;
+
+  for(i=0;;i++)
+  {
+    if(segments[i]==NULL) break;
+    palloc_free_multiple(segments[i],segSize[i]);
+  }
+
+  printf("fragmentation bench finished, (with seed: %d)\n", seed);
+  printf("segment allocatied: initial - %d, final - %d\n", segcnt, addedCnt+segcnt/10);
+  printf("fragmentation score: %d/%d(%d%%)\n\n",addedCnt,segcnt-segcnt/10,(addedCnt*100/(segcnt-segcnt/10)));
+
+  free(segments);
+  free(segSize);
+
+  return addedCnt*100 / (segcnt - segcnt/10) ;
+  */
+  return 0;
+}
+
+int
+test_allocation(){
+
+  int start_time = timer_ticks();
+  int elapsed_time;
+
+  size_t i;
+  char* dynamicmem[10];
+
+  printf ("할당 전 : \n");
+  palloc_get_status (0);
+
+  for (i=0; i<3; i++) {
+    dynamicmem[i] = (char *) malloc (145000);
+    memset (dynamicmem[i], 0x00, 145000);
+    printf ("할당 중 : \n");
+    palloc_get_status (0);
+  }
+
+  for (i=0; i<3; i++) {
+    free(dynamicmem[i]);
+    printf ("Free 중 : \n");
+    palloc_get_status (0);
+  }
+
+  for (i=4; i<8; i++) {
+    dynamicmem[i] = (char *) malloc (145000);
+    memset (dynamicmem[i], 0x00, 145000);
+    printf ("할당 중 : \n");
+    palloc_get_status (0);
+  }
+
+  for (i=4; i<8; i++) {
+    free(dynamicmem[i]);
+    printf ("Free 중 : \n");
+    palloc_get_status (0);
+  } 
+
+  elapsed_time = timer_ticks() - start_time;
+
+  return elapsed_time;
+}
+
+void
+test1 (void){
+  int testResult = 0;
+  int i;
+
+  printf ("test running time with seed 1~100\n");
+
+  testResult += test_allocation();
+  printf ("ended time test, elapsed time : %d.%04d seconds\n\n", testResult/1000, testResult%1000);
+
+  printf("\n");
+  printf ("test fragmentation with seed 1~100\n");
+  for(i =0;i<10;i++){
+    testResult += test_fragmentation(i);
+  }
+  printf ("ended fragmentation test, avg.score : %d.%02d\n\n", testResult/100, testResult%100);
+}
+
+
 /* Clear the "BSS", a segment that should be initialized to
    zeros.  It isn't actually stored on disk or zeroed by the
    kernel loader, so we have to zero it ourselves.
