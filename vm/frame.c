@@ -188,6 +188,7 @@ void vm_free_frame(void *frame) {
 void vm_set_frame(void *frame, void *pte, void *upage){
 	struct frame *f, *find;
 	struct list_elem *e;
+	f=frame;
 	e=list_head(&frame_list);
 	while((e=list_next(e)) != list_tail (&frame_list)){
 		find=list_entry(e, struct frame, elem);
