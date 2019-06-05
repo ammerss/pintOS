@@ -11,13 +11,13 @@ enum palloc_flags
     PAL_USER = 004              /* User page. */
   };
 
-/* The page allocator algorithm. Default is First Fit */
+//The page allocator algorithm. Default is First Fit
 enum palloc_allocator
   {
-    ALLOCATOR_FF = 0,            /* 0: First Fit (default) */
-    ALLOCATOR_NF,                /* 1: Next Fit  */
-    ALLOCATOR_BF,                /* 2: Best Fit  */
-    ALLOCATOR_BUDDY              /* 3: Buddy System  */
+    ALLOCATOR_FF = 0,            // 0: First Fit (default)
+    ALLOCATOR_NF,                // 1: Next Fit
+    ALLOCATOR_BF,                // 2: Best Fit
+    ALLOCATOR_BUDDY              // 3: Buddy System
   };
 
 extern enum palloc_allocator option;
