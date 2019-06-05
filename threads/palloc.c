@@ -74,7 +74,7 @@ palloc_init (size_t user_page_limit)
    FLAGS, in which case the kernel panics. */
 
 void *
-palloc_get_multiple (enum palloc_flags flags, size_t page_cnt, int option)
+palloc_get_multiple (enum palloc_flags flags, size_t page_cnt)
 {
   struct pool *pool = flags & PAL_USER ? &user_pool : &kernel_pool;
   void *pages;
@@ -116,7 +116,7 @@ palloc_get_multiple (enum palloc_flags flags, size_t page_cnt, int option)
 void *
 palloc_get_page (enum palloc_flags flags) 
 {
-  return palloc_get_multiple (flags, 1, 1);
+  return palloc_get_multiple (flags, 1);
 }
 
 /* Frees the PAGE_CNT pages starting at PAGES. */
