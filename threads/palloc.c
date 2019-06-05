@@ -34,8 +34,6 @@ struct pool
     uint8_t *base;                      /* Base of pool. */
   };
 
-size_t pre_page_idx;
-
 /* Two pools: one for kernel data, one for user pages. */
 static struct pool kernel_pool, user_pool;
 
